@@ -1,11 +1,13 @@
 @php
-    $statusInfo = auth()->user()->accountStatusInfo();
+    \App\Models\Transaction::syncPendingTransactions();
+    $cartCount = (int) auth()->user()->carts()->sum('jumlah');
+    $userPendingCount = (int) auth()->user()->transactions()->where('status', 'menunggu')->count();
 @endphp
 
-<div class="navbar-nav me-auto gap-1 mt-2 mt-lg-0">
+<div class="navbar-nav flex-row flex-wrap align-items-center justify-content-center mx-auto gap-1 gap-lg-2 my-2 my-lg-0">
     <a class="nav-pill-link {{ request()->routeIs('home', 'books.*') ? 'active' : '' }}"
         href="{{ route('books.index') }}">
-        <i class="bi bi-compass"></i> Katalog OPAC
+        <i class="bi bi-shop"></i> Katalog Buku
     </a>
 
     <a class="nav-pill-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
@@ -13,22 +15,37 @@
         <i class="bi bi-grid-1x2"></i> Dashboard
     </a>
 
-    <a class="nav-pill-link {{ request()->routeIs('loans.*') ? 'active' : '' }}"
-        href="{{ route('loans.index') }}">
-        <i class="bi bi-arrow-left-right"></i> Peminjaman Saya
+    <a class="nav-pill-link {{ request()->routeIs('cart.*') ? 'active' : '' }}"
+        href="{{ route('cart.index') }}">
+        <i class="bi bi-cart3"></i> Keranjang
+        @if($cartCount > 0)
+            <span class="badge rounded-pill bg-danger ms-1">{{ $cartCount }}</span>
+        @endif
+    </a>
+
+    <a class="nav-pill-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}"
+        href="{{ route('transactions.index') }}">
+        <i class="bi bi-receipt"></i> Transaksi Saya
+        @if($userPendingCount > 0)
+            <span class="badge rounded-pill bg-warning text-dark ms-1" title="{{ $userPendingCount }} pesanan menunggu diproses">{{ $userPendingCount }}</span>
+        @endif
     </a>
 
     <a class="nav-pill-link {{ request()->routeIs('member.card') ? 'active' : '' }}"
         href="{{ route('member.card') }}">
-        <i class="bi bi-person-vcard"></i> Kartu Anggota
+        <i class="bi bi-person-vcard"></i> Kartu Member
+    </a>
+
+    <a class="nav-pill-link {{ request()->routeIs('about') ? 'active' : '' }}"
+        href="{{ route('about') }}">
+        <i class="bi bi-info-circle"></i> About Us
     </a>
 </div>
 
-<div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
-    <span class="badge bg-{{ $statusInfo['color'] }} bg-opacity-10 text-{{ $statusInfo['color'] === 'warning' ? 'dark' : $statusInfo['color'] }} border border-{{ $statusInfo['color'] }} border-opacity-25 d-inline-flex align-items-center gap-1 py-2 px-3">
-        <i class="bi {{ $statusInfo['icon'] }}"></i>
-        {{ $statusInfo['status'] }}
-    </span>
+<div class="d-flex align-items-center justify-content-end gap-2 my-2 my-lg-0 flex-shrink-0">
+    <a href="{{ route('cart.index') }}" class="btn btn-soft-primary btn-sm position-relative px-3">
+        <i class="bi bi-cart-check-fill me-1"></i>({{ $cartCount }})
+    </a>
 
     <div class="d-flex align-items-center gap-2 ps-2 border-start ms-1">
         <span class="avatar-chip">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan Sirkulasi, Keterlambatan & Buku Hilang')
+@section('title', 'Laporan Penjualan & Inventaris Stok — BookStore')
 
 @section('content')
     @php
@@ -13,7 +13,7 @@
 
     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h2 class="fw-bold mb-1">Laporan Sirkulasi & Audit Koleksi (Standar USK)</h2>
+            <h2 class="fw-bold mb-1">Laporan Penjualan &amp; Audit Stok Buku</h2>
             <p class="text-secondary mb-0">
                 Periode Laporan: <strong>{{ $namaBulan[$month] ?? $month }} {{ $year }}</strong>
             </p>
@@ -23,17 +23,9 @@
             <button onclick="window.print()" class="btn btn-dark">
                 <i class="bi bi-printer-fill me-1"></i> Cetak / Simpan PDF
             </button>
-            <a href="{{ route('reports.export-csv', ['month' => $month, 'year' => $year, 'type' => 'monthly']) }}"
+            <a href="{{ route('reports.export-csv', ['month' => $month, 'year' => $year]) }}"
                 class="btn btn-success">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Excel (Sirkulasi Bulanan)
-            </a>
-            <a href="{{ route('reports.export-csv', ['type' => 'overdue']) }}"
-                class="btn btn-outline-danger">
-                <i class="bi bi-download me-1"></i> CSV Keterlambatan
-            </a>
-            <a href="{{ route('reports.export-csv', ['type' => 'lost']) }}"
-                class="btn btn-outline-secondary">
-                <i class="bi bi-download me-1"></i> CSV Buku Hilang
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Excel / CSV Penjualan
             </a>
         </div>
     </div>
@@ -42,7 +34,7 @@
     <form method="GET" action="{{ route('reports.index') }}" class="card border-0 shadow-sm rounded-4 p-3 mb-4 no-print">
         <div class="row g-2 align-items-end">
             <div class="col-sm-5 col-md-4">
-                <label class="form-label small fw-semibold mb-1">Bulan Sirkulasi</label>
+                <label class="form-label small fw-semibold mb-1">Bulan Transaksi</label>
                 <select name="month" class="form-select">
                     @foreach($namaBulan as $num => $label)
                         <option value="{{ $num }}" @selected($month === $num)>{{ $label }}</option>
@@ -63,39 +55,39 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-4 p-3">
-                <div class="small text-secondary">Total Sirkulasi ({{ $namaBulan[$month] ?? $month }})</div>
-                <div class="fs-3 fw-bold text-primary">{{ $summary['total_sirkulasi_bulan_ini'] }}</div>
-                <div class="small text-secondary">Selesai: {{ $summary['dikembalikan_bulan_ini'] }} | Aktif: {{ $summary['masih_dipinjam_bulan_ini'] }}</div>
+                <div class="small text-secondary">Total Transaksi ({{ $namaBulan[$month] ?? $month }})</div>
+                <div class="fs-3 fw-bold text-primary">{{ $summary['total_transaksi_bulan_ini'] }}</div>
+                <div class="small text-secondary">Lunas/Selesai: {{ $summary['transaksi_selesai_bulan_ini'] }}</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-4 p-3">
-                <div class="small text-secondary">Total Kasus Keterlambatan</div>
-                <div class="fs-3 fw-bold text-danger">{{ $summary['total_kasus_terlambat'] }}</div>
-                <div class="small text-secondary">Termasuk pinjaman menunggak aktif</div>
+                <div class="small text-secondary">Total Buku Terjual</div>
+                <div class="fs-3 fw-bold text-success">{{ $summary['buku_terjual_bulan_ini'] }} Eks</div>
+                <div class="small text-secondary">Stok langsung terpotong saat checkout</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-4 p-3">
-                <div class="small text-secondary">Daftar Buku Hilang (Lost)</div>
-                <div class="fs-3 fw-bold text-dark">{{ $summary['total_buku_hilang'] }}</div>
-                <div class="small text-secondary">Stok tidak dikembalikan &amp; sanksi 30 hr</div>
+                <div class="small text-secondary">Pendapatan Bulan Ini</div>
+                <div class="fs-4 fw-bold text-dark">Rp {{ number_format($summary['pendapatan_bulan_ini'], 0, ',', '.') }}</div>
+                <div class="small text-secondary">Omzet penjualan bersih</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-4 p-3">
-                <div class="small text-secondary">Kategori Koleksi Terdaftar</div>
-                <div class="fs-3 fw-bold text-success">{{ $summary['total_kategori'] }}</div>
-                <div class="small text-secondary">Klasifikasi DDC aktif</div>
+                <div class="small text-secondary">Kategori Buku Aktif</div>
+                <div class="fs-3 fw-bold text-primary">{{ $summary['total_kategori'] }}</div>
+                <div class="small text-secondary">Kategori katalog toko</div>
             </div>
         </div>
     </div>
 
-    {{-- 1. Tabel Laporan Sirkulasi Bulanan --}}
+    {{-- 1. Tabel Laporan Transaksi Penjualan Bulanan --}}
     <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
         <div class="card-header bg-white py-3 px-4 border-bottom">
             <h5 class="fw-bold mb-0">
-                1. Laporan Transaksi Sirkulasi Bulanan ({{ $namaBulan[$month] ?? $month }} {{ $year }})
+                1. Laporan Transaksi Penjualan Bulanan ({{ $namaBulan[$month] ?? $month }} {{ $year }})
             </h5>
         </div>
         <div class="table-responsive">
@@ -103,31 +95,32 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Kode</th>
-                        <th>Anggota</th>
-                        <th>Judul Buku</th>
-                        <th>Tgl Pinjam</th>
-                        <th>Jatuh Tempo</th>
-                        <th>Tgl Kembali</th>
+                        <th>Pembeli</th>
+                        <th>Rincian Buku</th>
+                        <th>Tanggal</th>
+                        <th>Metode</th>
+                        <th>Total Harga</th>
                         <th class="pe-4">Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($monthlyLoans as $loan)
+                    @forelse($monthlyTransactions as $trx)
                         <tr>
-                            <td class="ps-4 font-monospace small">{{ $loan->kode_transaksi }}</td>
+                            <td class="ps-4 font-monospace small">{{ $trx->kode_transaksi }}</td>
                             <td>
-                                <div class="fw-semibold">{{ $loan->user->name ?? '-' }}</div>
-                                <div class="small text-secondary">{{ $loan->user->nomor_anggota ?? '-' }}</div>
+                                <div class="fw-semibold">{{ $trx->user->name ?? '-' }}</div>
+                                <div class="small text-secondary">{{ $trx->user->nomor_anggota ?? '-' }}</div>
                             </td>
                             <td>
-                                <div class="fw-semibold">{{ $loan->book->judul ?? '-' }}</div>
-                                <div class="small text-secondary">Rak: {{ $loan->book->call_number ?? '-' }}</div>
+                                @foreach($trx->items as $item)
+                                    <div class="small">{{ $item->book->judul ?? '-' }} ({{ $item->jumlah }}x)</div>
+                                @endforeach
                             </td>
-                            <td>{{ $loan->tanggal_pinjam?->format('d/m/Y') }}</td>
-                            <td>{{ $loan->tanggal_kembali?->format('d/m/Y') }}</td>
-                            <td>{{ $loan->tanggal_dikembalikan?->format('d/m/Y') ?? '-' }}</td>
+                            <td>{{ $trx->tanggal_transaksi?->format('d/m/Y') }}</td>
+                            <td>{{ $trx->metode_pembayaran }}</td>
+                            <td class="fw-bold">Rp {{ number_format($trx->total_harga, 0, ',', '.') }}</td>
                             <td class="pe-4">
-                                <span class="badge bg-secondary">{{ strtoupper($loan->status) }}</span>
+                                <span class="badge bg-secondary">{{ strtoupper($trx->status) }}</span>
                             </td>
                         </tr>
                     @empty
@@ -140,91 +133,45 @@
         </div>
     </div>
 
-    {{-- 2. Tabel Statistik Keterlambatan & Sanksi --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-        <div class="card-header bg-white py-3 px-4 border-bottom">
-            <h5 class="fw-bold mb-0 text-danger">
-                2. Laporan Statistik Keterlambatan & Sanksi Skorsing
-            </h5>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">Kode</th>
-                        <th>Nama Siswa</th>
-                        <th>Buku</th>
-                        <th>Jatuh Tempo</th>
-                        <th>Keterlambatan</th>
-                        <th>Sanksi Skorsing</th>
-                        <th class="pe-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($overdueLoans as $loan)
-                        <tr>
-                            <td class="ps-4 font-monospace small">{{ $loan->kode_transaksi }}</td>
-                            <td>{{ $loan->user->name ?? '-' }} ({{ $loan->user->nomor_anggota ?? '-' }})</td>
-                            <td>{{ $loan->book->judul ?? '-' }}</td>
-                            <td>{{ $loan->tanggal_kembali?->format('d/m/Y') }}</td>
-                            <td class="text-danger fw-bold">{{ $loan->late_days }} hari</td>
-                            <td>
-                                @php
-                                    $sanksi = $loan->hari_sanksi > 0 ? $loan->hari_sanksi : \App\Models\Loan::calculateSanctionDays($loan->late_days);
-                                @endphp
-                                <span class="badge bg-warning text-dark">Suspend {{ $sanksi }} Hari</span>
-                            </td>
-                            <td class="pe-4">
-                                <span class="badge {{ $loan->status === 'dipinjam' ? 'bg-danger' : 'bg-secondary' }}">
-                                    {{ $loan->status === 'dipinjam' ? 'MASIH MENUNGGAK (OVERDUE LOCK)' : strtoupper($loan->status) }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-secondary py-4">Belum ada catatan keterlambatan.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- 3. Daftar Buku Hilang (status: hilang) --}}
+    {{-- 2. Tabel Inventaris Stok & Harga Buku --}}
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-header bg-white py-3 px-4 border-bottom">
             <h5 class="fw-bold mb-0">
-                3. Daftar Koleksi Buku Hilang (Penghapusan Stok & Sanksi 30 Hari)
+                2. Laporan Inventaris Stok &amp; Penjualan per Judul Buku
             </h5>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4">Kode Transaksi</th>
-                        <th>Judul Buku & ISBN</th>
-                        <th>Peminjam Terakhir</th>
-                        <th>Tanggal Dilaporkan</th>
-                        <th>Sanksi</th>
-                        <th class="pe-4">Keterangan</th>
+                        <th class="ps-4">Judul Buku</th>
+                        <th>Kategori</th>
+                        <th>Harga Satuan</th>
+                        <th>Stok Tersedia</th>
+                        <th>Di Keranjang User</th>
+                        <th class="pe-4">Total Terjual</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($lostBooks as $loan)
+                    @forelse($booksInventory as $book)
                         <tr>
-                            <td class="ps-4 font-monospace small">{{ $loan->kode_transaksi }}</td>
-                            <td>
-                                <div class="fw-semibold">{{ $loan->book->judul ?? '-' }}</div>
-                                <div class="small text-secondary">ISBN: {{ $loan->book->isbn ?? '-' }}</div>
+                            <td class="ps-4">
+                                <div class="fw-semibold">{{ $book->judul }}</div>
+                                <div class="small text-secondary">ISBN: {{ $book->isbn ?? '-' }}</div>
                             </td>
-                            <td>{{ $loan->user->name ?? '-' }} ({{ $loan->user->nomor_anggota ?? '-' }})</td>
-                            <td>{{ $loan->tanggal_dikembalikan?->format('d/m/Y') ?? '-' }}</td>
-                            <td><span class="badge bg-danger">Suspend 30 Hari</span></td>
-                            <td class="pe-4 small text-secondary">{{ $loan->catatan ?? '-' }}</td>
+                            <td>{{ $book->category->nama ?? 'Umum' }}</td>
+                            <td>{{ $book->formatted_harga }}</td>
+                            <td>
+                                <span class="badge {{ $book->stok > 0 ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $book->stok }} eks
+                                </span>
+                            </td>
+                            <td>{{ $book->carts_count }} keranjang</td>
+                            <td class="pe-4 fw-bold">{{ (int) ($book->terjual_count ?? 0) }} eks</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-secondary py-4">Tidak ada koleksi buku yang tercatat hilang.</td>
+                            <td colspan="6" class="text-center text-secondary py-4">Belum ada data buku.</td>
                         </tr>
                     @endforelse
                 </tbody>

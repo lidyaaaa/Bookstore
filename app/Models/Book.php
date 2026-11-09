@@ -16,14 +16,24 @@ class Book extends Model
         'penulis',
         'penerbit',
         'tahun_terbit',
+        'harga',
         'stok',
         'total_koleksi',
         'cover',
         'sinopsis',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'harga' => 'integer',
+            'stok' => 'integer',
+            'total_koleksi' => 'integer',
+        ];
+    }
+
     /**
-     * Relasi ke kategori/subjek buku.
+     * Relasi ke kategori buku.
      */
     public function category(): BelongsTo
     {
@@ -31,19 +41,34 @@ class Book extends Model
     }
 
     /**
-     * Relasi ke seluruh transaksi peminjaman buku ini.
+     * Relasi ke item keranjang belanja yang memuat buku ini.
      */
-    public function loans(): HasMany
+    public function carts(): HasMany
     {
-        return $this->hasMany(Loan::class);
+        return $this->hasMany(Cart::class);
     }
 
     /**
-     * Relasi ke transaksi peminjaman yang sudah disetujui dan sedang aktif memegang fisik buku.
-     * Pengajuan yang masih berstatus 'menunggu' belum dianggap dipinjam.
+     * Relasi ke item transaksi penjualan buku ini.
      */
-    public function activeLoans(): HasMany
+    public function transactionItems(): HasMany
     {
-        return $this->hasMany(Loan::class)->where('status', Loan::STATUS_DIPINJAM);
+        return $this->hasMany(TransactionItem::class);
+    }
+
+    /**
+     * Mengecek apakah buku ini sedang berada di keranjang belanja user manapun.
+     */
+    public function isInAnyCart(): bool
+    {
+        return $this->carts()->exists();
+    }
+
+    /**
+     * Format harga Rupiah.
+     */
+    public function getFormattedHargaAttribute(): string
+    {
+        return 'Rp '.number_format((float) $this->harga, 0, ',', '.');
     }
 }

@@ -61,13 +61,14 @@ h1, h2, h3, h4, h5, h6, .fw-bold {
 .nav-pill-link {
     color: var(--slate-600);
     text-decoration: none;
-    padding: 0.48rem 0.9rem;
+    padding: 0.45rem 0.8rem;
     border-radius: 10px;
     font-weight: 600;
     font-size: 0.875rem;
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
+    white-space: nowrap;
     transition: all 0.16s ease;
 }
 

@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Category;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
     /**
-     * Halaman OPAC (Online Public Access Catalog) & Katalog Buku
-     * Mendukung pencarian cepat (Judul, Penulis, Kategori/Subjek, ISBN, Call Number)
-     * serta filter ketersediaan stok fisik vs dipinjam.
+     * Halaman Katalog Bookstore
+     * Mendukung pencarian cepat (Judul, Penulis, Kategori, ISBN, Kode Rak)
+     * serta filter ketersediaan stok.
      */
     public function index(Request $request)
     {
@@ -20,7 +21,10 @@ class BookController extends Controller
 
         $books = Book::query()
             ->with('category')
-            ->withCount('activeLoans')
+            ->withCount('carts')
+            ->withSum(['transactionItems as terjual_count' => function ($q): void {
+                $q->whereHas('transaction', fn ($tq) => $tq->where('status', '!=', Transaction::STATUS_DIBATALKAN));
+            }], 'jumlah')
             ->when($request->filled('search'), function ($query) use ($request): void {
                 $search = trim((string) $request->search);
                 $query->where(function ($q) use ($search): void {
@@ -41,11 +45,8 @@ class BookController extends Controller
             ->when($request->availability === 'available', function ($query): void {
                 $query->where('stok', '>', 0);
             })
-            ->when($request->availability === 'borrowed', function ($query): void {
-                $query->where(function ($q): void {
-                    $q->where('stok', 0)
-                        ->orWhereHas('activeLoans');
-                });
+            ->when($request->availability === 'out_of_stock', function ($query): void {
+                $query->where('stok', '<=', 0);
             })
             ->latest()
             ->paginate(12)
@@ -56,7 +57,7 @@ class BookController extends Controller
 
     public function create()
     {
-        $categories = Category::orderBy('nama')->get();
+        $categories = Category::withCount('books')->orderBy('nama')->get();
 
         return view('admin.books.create', compact('categories'));
     }
@@ -77,12 +78,15 @@ class BookController extends Controller
                 'min:1000',
                 'max:'.date('Y'),
             ],
-            'total_koleksi' => 'required|integer|min:0',
+            'harga' => 'required|integer|min:0',
+            'stok' => 'required|integer|min:0',
             'sinopsis' => 'nullable|string|max:2000',
             'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'stok.min' => 'Stok buku tidak boleh bernilai minus (minimal 0).',
+            'harga.min' => 'Harga buku tidak boleh bernilai minus.',
         ]);
 
-        // Jika admin mengetik nama kategori/subjek baru langsung di form buku
         if ($request->filled('kategori_baru')) {
             $newCat = Category::firstOrCreate([
                 'nama' => trim((string) $request->kategori_baru),
@@ -91,8 +95,10 @@ class BookController extends Controller
         }
         unset($data['kategori_baru']);
 
-        // Ketersediaan awal otomatis sama dengan total buku fisik
-        $data['stok'] = (int) $data['total_koleksi'];
+        $data['stok'] = max(0, (int) $data['stok']);
+        $data['total_koleksi'] = $data['stok'];
+        $data['penerbit'] = $data['penerbit'] ?? '-';
+        $data['tahun_terbit'] = $data['tahun_terbit'] ?? date('Y');
 
         if ($request->hasFile('cover')) {
             $data['cover'] = $request->file('cover')->store('covers', 'public');
@@ -102,12 +108,12 @@ class BookController extends Controller
 
         return redirect()
             ->route('books.index')
-            ->with('success', 'Koleksi buku berhasil ditambahkan ke katalog OPAC.');
+            ->with('success', 'Buku baru berhasil ditambahkan ke katalog toko.');
     }
 
     public function edit(Book $book)
     {
-        $categories = Category::orderBy('nama')->get();
+        $categories = Category::withCount('books')->orderBy('nama')->get();
 
         return view('admin.books.edit', compact('book', 'categories'));
     }
@@ -128,11 +134,13 @@ class BookController extends Controller
                 'min:1000',
                 'max:'.date('Y'),
             ],
-            'total_koleksi' => 'required|integer|min:'.$book->activeLoans()->count(),
+            'harga' => 'required|integer|min:0',
+            'stok' => 'required|integer|min:0',
             'sinopsis' => 'nullable|string|max:2000',
             'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
-            'total_koleksi.min' => 'Total fisik tidak boleh kurang dari jumlah buku yang sedang dipinjam (:min).',
+            'stok.min' => 'Stok buku tidak boleh bernilai minus (minimal 0).',
+            'harga.min' => 'Harga buku tidak boleh bernilai minus.',
         ]);
 
         if ($request->filled('kategori_baru')) {
@@ -143,8 +151,13 @@ class BookController extends Controller
         }
         unset($data['kategori_baru']);
 
-        // Ketersediaan otomatis = total fisik - buku yang sedang dipinjam
-        $data['stok'] = (int) $data['total_koleksi'] - $book->activeLoans()->count();
+        $data['stok'] = max(0, (int) $data['stok']);
+        $soldCount = (int) $book->transactionItems()
+            ->whereHas('transaction', fn ($q) => $q->where('status', '!=', Transaction::STATUS_DIBATALKAN))
+            ->sum('jumlah');
+        $data['total_koleksi'] = $data['stok'] + $soldCount;
+        $data['penerbit'] = $data['penerbit'] ?? '-';
+        $data['tahun_terbit'] = $data['tahun_terbit'] ?? date('Y');
 
         if ($request->hasFile('cover')) {
             if ($book->cover) {
@@ -158,23 +171,35 @@ class BookController extends Controller
 
         return redirect()
             ->route('books.index')
-            ->with('success', 'Data koleksi buku berhasil diperbarui.');
+            ->with('success', 'Data buku berhasil diperbarui.');
     }
 
+    /**
+     * Hapus buku (Admin).
+     * Aturan Bisnis: Buku TIDAK BISA dihapus apabila sedang berada di keranjang belanja user.
+     */
     public function destroy(Book $book)
     {
+        if ($book->isInAnyCart()) {
+            return back()->withErrors([
+                'book' => sprintf(
+                    'Buku "%s" tidak dapat dihapus karena sedang berada di dalam keranjang belanja pengguna.',
+                    $book->judul
+                ),
+            ]);
+        }
+
         $judul = $book->judul;
 
         if ($book->cover) {
             Storage::disk('public')->delete($book->cover);
         }
 
-        // Hapus juga data pinjaman terkait agar langsung hilang dari sisi user & admin
-        $book->loans()->delete();
+        $book->transactionItems()->delete();
         $book->delete();
 
         return redirect()
             ->route('books.index')
-            ->with('success', "Koleksi buku \"{$judul}\" beserta riwayat sirkulasinya berhasil dihapus.");
+            ->with('success', "Buku \"{$judul}\" berhasil dihapus dari katalog.");
     }
 }

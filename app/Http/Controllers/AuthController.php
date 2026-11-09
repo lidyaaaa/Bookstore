@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -19,23 +19,22 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'nisn' => 'required|digits:10|unique:users,nisn',
             'email' => 'required|email|max:255|unique:users,email',
-            'kelas_jabatan' => ['required', Rule::in(User::KELAS_OPTIONS)],
             'telepon' => 'required|digits_between:10,13',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()->symbols()],
         ], [
-            'nisn.digits' => 'NISN harus berupa 10 digit angka.',
-            'nisn.unique' => 'NISN sudah terdaftar.',
-            'kelas_jabatan.in' => 'Pilih kelas yang tersedia.',
-            'telepon.digits_between' => 'Nomor telepon harus angka 10–13 digit.',
+            'telepon.digits_between' => 'Nomor telepon harus berupa angka 10–13 digit.',
+            'password.min' => 'Password minimal harus 8 karakter.',
+            'password.letters' => 'Password harus mengandung minimal satu huruf.',
+            'password.numbers' => 'Password harus mengandung minimal satu angka.',
+            'password.symbols' => 'Password harus mengandung minimal satu simbol (contoh: @, #, !, $, _).',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         User::create([
             'name' => $data['name'],
-            'nisn' => $data['nisn'],
             'email' => $data['email'],
-            'kelas_jabatan' => $data['kelas_jabatan'],
+            'kelas_jabatan' => 'Pelanggan Umum',
             'telepon' => $data['telepon'],
             'password' => Hash::make($data['password']),
             'role' => 'user',
@@ -43,7 +42,7 @@ class AuthController extends Controller
 
         return redirect()
             ->route('login')
-            ->with('success', 'Registrasi keanggotaan berhasil. Silakan login.');
+            ->with('success', 'Registrasi akun berhasil. Silakan login untuk mulai berbelanja.');
     }
 
     public function showLogin()
@@ -60,8 +59,9 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $request->session()->forget('url.intended');
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->route('dashboard');
         }
 
         return back()

@@ -1,29 +1,22 @@
 @extends('layouts.app')
 
-@section('title', 'OPAC — Katalog Koleksi Perpustakaan')
+@section('title', 'Katalog Buku — BookStore')
 
 @section('content')
-    {{-- Banner Peringatan Sanksi / Overdue Lock khusus Siswa --}}
-    @auth
-        @if(auth()->user()->role === 'user')
-            @include('user.books.partials.eligibility-banner')
-        @endif
-    @endauth
-
-    {{-- Header OPAC Fleksibel & Segar --}}
+    {{-- Header Katalog Bookstore --}}
     <div class="opac-header-surface p-4 p-lg-5 mb-4">
         <div class="row align-items-center justify-content-between g-3 mb-4">
             <div class="col-lg-7">
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-2"
                     style="background: #dbeafe; color: #1e40af; font-size: 0.76rem; font-weight: 700;">
-                    <i class="bi bi-compass-fill"></i>
-                    <span>KATALOG OPAC PERPUSTAKAAN</span>
+                    <i class="bi bi-shop"></i>
+                    <span>KATALOG TOKO BUKU DIGITAL</span>
                 </div>
                 <h1 class="fw-extrabold text-slate-900 mb-1" style="font-size: clamp(1.55rem, 2.6vw, 2.2rem);">
-                    Eksplorasi <span class="text-gradient-brand">Koleksi & Referensi</span>
+                    Temukan &amp; Beli <span class="text-gradient-brand">Buku Pilihanmu</span>
                 </h1>
                 <p class="text-slate-600 mb-0" style="font-size: 0.94rem;">
-                    Cari buku secara instan berdasarkan Judul, Pengarang, Subjek DDC, Nomor ISBN, atau Rak.
+                    Cari buku secara instan berdasarkan Judul, Penulis, Kategori, Nomor ISBN, atau Rak.
                 </p>
             </div>
 
@@ -38,26 +31,25 @@
                     @if(auth()->user()->role === 'admin')
                         <button type="button" class="btn btn-soft-primary bg-white"
                             data-bs-toggle="modal" data-bs-target="#categoryModal">
-                            <i class="bi bi-tags-fill"></i> + Kelola Subjek / Kategori
+                            <i class="bi bi-tags-fill"></i> + Kelola Kategori
                         </button>
                         <a href="{{ route('books.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-lg"></i> Tambah Koleksi
+                            <i class="bi bi-plus-lg"></i> Tambah Buku
                         </a>
                     @else
                         @php
-                            $activeUserLoans = auth()->user()->activeLoans()->count();
+                            $cartCount = (int) auth()->user()->carts()->sum('jumlah');
                         @endphp
-                        <div class="stat-glass-pill">
-                            <i class="bi bi-bookmark-check-fill text-success"></i>
-                            <span>Kuota Pinjam: <strong class="text-slate-900">{{ $activeUserLoans }}/{{ \App\Models\User::MAX_ACTIVE_LOANS }}</strong></span>
-                        </div>
-                        <a href="{{ route('loans.index') }}" class="btn btn-soft-primary bg-white">
-                            <i class="bi bi-clock-history"></i> Pinjaman Saya
+                        <a href="{{ route('cart.index') }}" class="btn btn-primary">
+                            <i class="bi bi-cart3"></i> Keranjang Saya ({{ $cartCount }})
+                        </a>
+                        <a href="{{ route('transactions.index') }}" class="btn btn-soft-primary bg-white">
+                            <i class="bi bi-receipt"></i> Pesanan Saya
                         </a>
                     @endif
                 @else
                     <a href="{{ route('login') }}" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-in-right"></i> Masuk untuk Meminjam
+                        <i class="bi bi-box-arrow-in-right"></i> Masuk untuk Membeli
                     </a>
                 @endauth
             </div>
@@ -78,7 +70,7 @@
                         <div class="d-flex align-items-center ps-2">
                             <i class="bi bi-search text-primary fs-5 me-2"></i>
                             <input type="text" name="search" class="form-control ps-1"
-                                placeholder="Ketik judul buku, nama pengarang, nomor ISBN, atau kode panggil rak..."
+                                placeholder="Ketik judul buku, nama penulis, penerbit, atau nomor ISBN..."
                                 value="{{ request('search') }}">
                         </div>
                     </div>
@@ -100,7 +92,7 @@
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-1">
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <span class="small fw-bold text-slate-600 me-1">
-                    <i class="bi bi-funnel me-1"></i>Subjek:
+                    <i class="bi bi-funnel me-1"></i>Kategori:
                 </span>
                 <a href="{{ route('books.index', array_filter(['search' => request('search'), 'availability' => request('availability')])) }}"
                     class="filter-chip {{ !request()->filled('category_id') ? 'active' : '' }}">
@@ -119,7 +111,7 @@
                         <button type="button" class="filter-chip text-primary border-primary border-opacity-50"
                             style="border-style: dashed !important; background: rgba(239, 246, 255, 0.85);"
                             data-bs-toggle="modal" data-bs-target="#categoryModal">
-                            <i class="bi bi-plus-circle-fill"></i> Tambah / Edit Subjek
+                            <i class="bi bi-plus-circle-fill"></i> Tambah / Edit Kategori
                         </button>
                     @endif
                 @endauth
@@ -128,21 +120,21 @@
             <div class="d-flex flex-wrap align-items-center gap-1">
                 <a href="{{ route('books.index', array_filter(['search' => request('search'), 'category_id' => request('category_id')])) }}"
                     class="filter-chip {{ !request()->filled('availability') ? 'active' : '' }}">
-                    Semua Ketersediaan
+                    Semua Stok
                 </a>
                 <a href="{{ route('books.index', array_filter(['search' => request('search'), 'category_id' => request('category_id'), 'availability' => 'available'])) }}"
                     class="filter-chip {{ request('availability') === 'available' ? 'active' : '' }}">
-                    <span class="status-dot bg-success"></span> Tersedia di Rak
+                    <span class="status-dot bg-success"></span> Stok Tersedia
                 </a>
-                <a href="{{ route('books.index', array_filter(['search' => request('search'), 'category_id' => request('category_id'), 'availability' => 'borrowed'])) }}"
-                    class="filter-chip {{ request('availability') === 'borrowed' ? 'active' : '' }}">
-                    <span class="status-dot bg-warning"></span> Sedang Dipinjam
+                <a href="{{ route('books.index', array_filter(['search' => request('search'), 'category_id' => request('category_id'), 'availability' => 'out_of_stock'])) }}"
+                    class="filter-chip {{ request('availability') === 'out_of_stock' ? 'active' : '' }}">
+                    <span class="status-dot bg-danger"></span> Stok Habis
                 </a>
             </div>
         </div>
     </div>
 
-    {{-- Grid Kartu Koleksi Buku --}}
+    {{-- Grid Kartu Buku --}}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
         @forelse($books as $book)
             @include('books.partials.book-card', ['book' => $book])
@@ -152,7 +144,7 @@
                     <div class="mx-auto mb-3 d-inline-flex align-items-center justify-content-center rounded-circle bg-light" style="width: 64px; height: 64px;">
                         <i class="bi bi-search fs-3 text-slate-600"></i>
                     </div>
-                    <h5 class="fw-bold text-slate-900">Koleksi Tidak Ditemukan</h5>
+                    <h5 class="fw-bold text-slate-900">Buku Tidak Ditemukan</h5>
                     <p class="text-slate-600 small mb-3">Tidak ada buku yang cocok dengan kata kunci atau filter yang Anda pilih.</p>
                     <div>
                         <a href="{{ route('books.index') }}" class="btn btn-soft-primary btn-sm px-3">
@@ -168,7 +160,7 @@
         {{ $books->links('pagination::bootstrap-5') }}
     </div>
 
-    {{-- Modal Subjek khusus Admin --}}
+    {{-- Modal Kategori khusus Admin --}}
     @auth
         @if(auth()->user()->role === 'admin')
             @include('admin.books.partials.category-modal')

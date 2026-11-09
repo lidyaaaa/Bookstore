@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use App\Models\Category;
-use App\Models\Loan;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -11,11 +12,24 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReportController extends Controller
 {
     /**
-     * Halaman Cetak Kartu Anggota Digital Perpustakaan.
+     * Halaman Cetak Kartu Member Digital Bookstore.
      */
     public function memberCard(?User $user = null)
     {
         $authUser = auth()->user();
+
+        if ($authUser->role === 'admin' && $user === null) {
+            return redirect()
+                ->route('dashboard')
+                ->withErrors([
+                    'role' => 'Akses dibatasi: Halaman Kartu Member hanya diperuntukkan bagi Pelanggan.',
+                ]);
+        }
+
+        if ($authUser->role !== 'admin' && $user !== null && $user->id !== $authUser->id) {
+            abort(403, 'Anda tidak memiliki akses ke kartu member pelanggan lain.');
+        }
+
         $targetUser = ($authUser->role === 'admin' && $user !== null) ? $user : $authUser;
         $accountInfo = $targetUser->accountStatusInfo();
 
@@ -26,123 +40,98 @@ class ReportController extends Controller
     }
 
     /**
-     * Halaman Laporan Sirkulasi Bulanan, Statistik Keterlambatan, dan Daftar Buku Hilang (Admin).
+     * Halaman Laporan Penjualan Bulanan & Stok Buku (Admin).
      */
     public function index(Request $request)
     {
         $month = (int) $request->input('month', (int) date('m'));
         $year = (int) $request->input('year', (int) date('Y'));
 
-        $monthlyLoans = Loan::with(['user', 'book.category'])
-            ->whereYear('tanggal_pinjam', $year)
-            ->whereMonth('tanggal_pinjam', $month)
-            ->latest('tanggal_pinjam')
+        $monthlyTransactions = Transaction::with(['user', 'items.book.category'])
+            ->whereYear('tanggal_transaksi', $year)
+            ->whereMonth('tanggal_transaksi', $month)
+            ->latest('tanggal_transaksi')
             ->get();
 
-        $overdueLoans = Loan::with(['user', 'book'])
-            ->where(function ($q): void {
-                $q->where('hari_terlambat', '>', 0)
-                    ->orWhere(function ($sub): void {
-                        $sub->where('status', Loan::STATUS_DIPINJAM)
-                            ->whereDate('tanggal_kembali', '<', today());
-                    });
-            })
-            ->latest()
-            ->get();
+        $completedMonthly = $monthlyTransactions->where('status', Transaction::STATUS_SELESAI);
+        $validSoldMonthly = $monthlyTransactions->where('status', '!=', Transaction::STATUS_DIBATALKAN);
 
-        $lostBooks = Loan::with(['user', 'book.category'])
-            ->where('status', Loan::STATUS_HILANG)
-            ->latest('tanggal_dikembalikan')
+        $booksInventory = Book::with('category')
+            ->withCount('carts')
+            ->withSum(['transactionItems as terjual_count' => function ($q): void {
+                $q->whereHas('transaction', fn ($tq) => $tq->where('status', '!=', Transaction::STATUS_DIBATALKAN));
+            }], 'jumlah')
+            ->orderBy('stok')
             ->get();
 
         $summary = [
-            'total_sirkulasi_bulan_ini' => $monthlyLoans->count(),
-            'dikembalikan_bulan_ini' => $monthlyLoans->where('status', Loan::STATUS_DIKEMBALIKAN)->count(),
-            'masih_dipinjam_bulan_ini' => $monthlyLoans->where('status', Loan::STATUS_DIPINJAM)->count(),
-            'total_kasus_terlambat' => $overdueLoans->count(),
-            'total_buku_hilang' => $lostBooks->count(),
+            'total_transaksi_bulan_ini' => $monthlyTransactions->count(),
+            'transaksi_selesai_bulan_ini' => $completedMonthly->count(),
+            'buku_terjual_bulan_ini' => (int) $validSoldMonthly->sum('total_item'),
+            'pendapatan_bulan_ini' => (int) $validSoldMonthly->sum('total_harga'),
             'total_kategori' => Category::count(),
         ];
 
         return view('admin.reports.index', compact(
             'month',
             'year',
-            'monthlyLoans',
-            'overdueLoans',
-            'lostBooks',
+            'monthlyTransactions',
+            'booksInventory',
             'summary'
         ));
     }
 
     /**
-     * Export Laporan Sirkulasi Bulanan ke format CSV (Excel-compatible dengan UTF-8 BOM).
+     * Export Laporan Penjualan Bulanan ke format CSV (Excel-compatible dengan UTF-8 BOM).
      */
     public function exportCsv(Request $request): StreamedResponse
     {
         $month = (int) $request->input('month', (int) date('m'));
         $year = (int) $request->input('year', (int) date('Y'));
-        $type = (string) $request->input('type', 'monthly');
 
-        $filename = sprintf('laporan-perpustakaan-%s-%04d-%02d.csv', $type, $year, $month);
+        $filename = sprintf('laporan-penjualan-bookstore-%04d-%02d.csv', $year, $month);
 
-        return response()->streamDownload(function () use ($month, $year, $type): void {
+        return response()->streamDownload(function () use ($month, $year): void {
             $handle = fopen('php://output', 'w');
 
-            // UTF-8 BOM agar Microsoft Excel langsung mengenali kolom & karakter dengan benar
             fwrite($handle, "\xEF\xBB\xBF");
 
             fputcsv($handle, [
                 'Kode Transaksi',
-                'Nomor Anggota',
-                'Nama Peminjam',
-                'Kelas / Jabatan',
-                'Judul Buku',
-                'ISBN',
-                'Call Number',
-                'Tanggal Pinjam',
-                'Jatuh Tempo (Due Date)',
-                'Tanggal Dikembalikan',
+                'Nomor Member',
+                'Nama Pembeli',
+                'Daftar Buku Dibeli',
+                'Tanggal Transaksi',
+                'Total Item',
+                'Total Harga (Rp)',
+                'Metode Pembayaran',
+                'Alamat Pengiriman',
                 'Status',
-                'Perpanjangan',
-                'Hari Terlambat',
-                'Sanksi Suspend (Hari)',
                 'Catatan',
             ]);
 
-            $query = Loan::with(['user', 'book']);
+            $query = Transaction::with(['user', 'items.book'])
+                ->whereYear('tanggal_transaksi', $year)
+                ->whereMonth('tanggal_transaksi', $month)
+                ->latest('tanggal_transaksi');
 
-            if ($type === 'lost') {
-                $query->where('status', Loan::STATUS_HILANG);
-            } elseif ($type === 'overdue') {
-                $query->where(function ($q): void {
-                    $q->where('hari_terlambat', '>', 0)
-                        ->orWhere(function ($sub): void {
-                            $sub->where('status', Loan::STATUS_DIPINJAM)
-                                ->whereDate('tanggal_kembali', '<', today());
-                        });
-                });
-            } else {
-                $query->whereYear('tanggal_pinjam', $year)
-                    ->whereMonth('tanggal_pinjam', $month);
-            }
+            foreach ($query->cursor() as $trx) {
+                $bookList = $trx->items->map(function ($item): string {
+                    return sprintf('%s (%dx @ Rp%s)', $item->book->judul ?? '-', $item->jumlah, number_format($item->harga_satuan, 0, ',', '.'));
+                })->implode('; ');
 
-            foreach ($query->latest('tanggal_pinjam')->cursor() as $loan) {
                 fputcsv($handle, [
-                    $loan->kode_transaksi,
-                    $loan->user->nomor_anggota ?? '-',
-                    $loan->user->name ?? '-',
-                    $loan->user->kelas_jabatan ?? '-',
-                    $loan->book->judul ?? '-',
-                    $loan->book->isbn ?? '-',
-                    $loan->book->call_number ?? '-',
-                    $loan->tanggal_pinjam?->format('Y-m-d'),
-                    $loan->tanggal_kembali?->format('Y-m-d'),
-                    $loan->tanggal_dikembalikan?->format('Y-m-d') ?? '-',
-                    strtoupper($loan->status),
-                    $loan->perpanjangan_ke.'x',
-                    $loan->late_days,
-                    $loan->hari_sanksi,
-                    $loan->catatan ?? '-',
+                    $trx->kode_transaksi,
+                    $trx->user->nomor_anggota ?? '-',
+                    $trx->user->name ?? '-',
+                    $bookList,
+                    $trx->tanggal_transaksi?->format('Y-m-d'),
+                    $trx->total_item,
+                    $trx->total_harga,
+                    $trx->metode_pembayaran,
+                    $trx->alamat_pengiriman ?? '-',
+                    strtoupper($trx->status),
+                    $trx->catatan ?? '-',
                 ]);
             }
 
