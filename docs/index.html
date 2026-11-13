@@ -29,6 +29,40 @@
             border-bottom: 1px solid #334155;
         }
 
+        .role-switcher-tab {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #cbd5e1;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 4px 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .role-switcher-tab:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .role-switcher-tab.active-user {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+        }
+
+        .role-switcher-tab.active-admin {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+        }
+
         .demo-pill-btn {
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.25);
@@ -51,6 +85,12 @@
             color: #fff;
         }
 
+        .demo-pill-btn.btn-admin:hover, .demo-pill-btn.btn-admin.active {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #fff;
+        }
+
         .preview-screen {
             display: none;
         }
@@ -63,29 +103,51 @@
 <body>
 
     <!-- ======================================================== -->
-    <!-- DEMO TOOLBAR: NAVIGASI KE SEMUA HALAMAN                  -->
+    <!-- DEMO TOOLBAR: NAVIGASI DIPISAH USER & ADMIN              -->
     <!-- ======================================================== -->
     <div class="demo-top-bar d-flex flex-wrap align-items-center justify-content-between gap-2 shadow no-print">
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-primary px-2 py-1"><i class="bi bi-eye-fill me-1"></i> GITHUB PREVIEW</span>
-            <span class="d-none d-md-inline">Halaman:</span>
-            <strong id="activeScreenName" class="text-warning">Katalog Buku (User)</strong>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary px-2 py-1"><i class="bi bi-eye-fill me-1"></i> PREVIEW</span>
+            
+            <!-- Switcher Mode Role -->
+            <div class="d-inline-flex align-items-center gap-1 bg-slate-900 p-1 rounded-3 border border-secondary border-opacity-50">
+                <button type="button" class="role-switcher-tab active-user" id="tab-mode-user" onclick="switchRoleMode('user')">
+                    <i class="bi bi-person-fill"></i> MODE PELANGGAN
+                </button>
+                <button type="button" class="role-switcher-tab" id="tab-mode-admin" onclick="switchRoleMode('admin')">
+                    <i class="bi bi-shield-lock-fill"></i> MODE ADMIN
+                </button>
+            </div>
+
+            <div class="d-none d-xl-flex align-items-center gap-1 text-slate-300">
+                <span class="small">Layar Aktif:</span>
+                <strong id="activeScreenName" class="text-warning">Katalog Buku (User)</strong>
+            </div>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-1">
+        <!-- Tombol Menu Khusus User -->
+        <div class="d-flex flex-wrap align-items-center gap-1" id="nav-group-user">
             <button class="demo-pill-btn" id="btn-login" onclick="setScreen('login')"><i class="bi bi-box-arrow-in-right"></i> Login</button>
-            <button class="demo-pill-btn active" id="btn-user-books" onclick="setScreen('user-books')"><i class="bi bi-shop"></i> Katalog</button>
-            <button class="demo-pill-btn" id="btn-user-dash" onclick="setScreen('user-dash')"><i class="bi bi-grid-1x2"></i> Dashboard User</button>
-            <button class="demo-pill-btn" id="btn-user-cart" onclick="setScreen('user-cart')"><i class="bi bi-cart3"></i> Keranjang</button>
-            <button class="demo-pill-btn" id="btn-user-trx" onclick="setScreen('user-trx')"><i class="bi bi-receipt"></i> Transaksi User</button>
-            <button class="demo-pill-btn" id="btn-member" onclick="setScreen('member')"><i class="bi bi-person-vcard"></i> Kartu Member</button>
+            <button class="demo-pill-btn active" id="btn-user-books" onclick="setScreen('user-books')"><i class="bi bi-shop"></i> Katalog Toko</button>
             <button class="demo-pill-btn" id="btn-about" onclick="setScreen('about')"><i class="bi bi-info-circle"></i> About Us</button>
-            <span class="text-white-50 mx-1">|</span>
-            <button class="demo-pill-btn" id="btn-admin-dash" onclick="setScreen('admin-dash')"><i class="bi bi-speedometer2"></i> Admin Dash</button>
-            <button class="demo-pill-btn" id="btn-admin-trx" onclick="setScreen('admin-trx')"><i class="bi bi-receipt-cutoff"></i> Admin Trx</button>
-            <button class="demo-pill-btn" id="btn-admin-reports" onclick="setScreen('admin-reports')"><i class="bi bi-bar-chart-line"></i> Laporan</button>
-            <button class="demo-pill-btn" id="btn-admin-users" onclick="setScreen('admin-users')"><i class="bi bi-people"></i> Pengguna</button>
-            <button class="demo-pill-btn" id="btn-chat" onclick="setScreen('chat')"><i class="bi bi-chat-dots"></i> Chat</button>
+            <button class="demo-pill-btn" id="btn-user-dash" onclick="setScreen('user-dash')"><i class="bi bi-grid-1x2"></i> Dashboard</button>
+            <button class="demo-pill-btn" id="btn-user-cart" onclick="setScreen('user-cart')"><i class="bi bi-cart3"></i> Keranjang (2)</button>
+            <button class="demo-pill-btn" id="btn-user-trx" onclick="setScreen('user-trx')"><i class="bi bi-receipt"></i> Transaksi Saya</button>
+            <button class="demo-pill-btn" id="btn-member" onclick="setScreen('member')"><i class="bi bi-person-vcard"></i> Kartu Member</button>
+            <button class="demo-pill-btn" id="btn-chat-user" onclick="setScreen('chat')"><i class="bi bi-chat-dots"></i> Chat Toko</button>
+        </div>
+
+        <!-- Tombol Menu Khusus Admin (Terpisah & Rapi) -->
+        <div class="d-flex flex-wrap align-items-center gap-1 d-none" id="nav-group-admin">
+            <span class="badge bg-danger bg-opacity-25 text-danger-subtle border border-danger border-opacity-50 px-2 py-1 me-1">
+                <i class="bi bi-shield-check me-1"></i> Admin Panel
+            </span>
+            <button class="demo-pill-btn btn-admin" id="btn-admin-dash" onclick="setScreen('admin-dash')"><i class="bi bi-speedometer2"></i> Dashboard</button>
+            <button class="demo-pill-btn btn-admin" id="btn-admin-books" onclick="setScreen('admin-books')"><i class="bi bi-journals"></i> Kelola Buku</button>
+            <button class="demo-pill-btn btn-admin" id="btn-admin-trx" onclick="setScreen('admin-trx')"><i class="bi bi-receipt-cutoff"></i> Transaksi (2)</button>
+            <button class="demo-pill-btn btn-admin" id="btn-admin-reports" onclick="setScreen('admin-reports')"><i class="bi bi-bar-chart-line"></i> Laporan</button>
+            <button class="demo-pill-btn btn-admin" id="btn-admin-users" onclick="setScreen('admin-users')"><i class="bi bi-people"></i> Pengguna</button>
+            <button class="demo-pill-btn btn-admin" id="btn-chat-admin" onclick="setScreen('chat')"><i class="bi bi-chat-dots"></i> Live Chat</button>
         </div>
     </div>
 
@@ -725,8 +787,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-slate-700 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="setScreen('user-books')">
-                            <i class="bi bi-shop"></i> <span>Katalog Buku</span>
+                        <a class="nav-link admin-nav-books text-slate-700 d-flex align-items-center gap-2" href="javascript:void(0)" onclick="setScreen('admin-books')">
+                            <i class="bi bi-journals"></i> <span>Kelola Buku</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -788,7 +850,7 @@
                     <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
                         <span class="fw-semibold text-slate-800">Dashboard Monitoring Admin</span>
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="setScreen('user-books')"><i class="bi bi-box-arrow-up-right me-1"></i> Lihat Toko</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="switchRoleMode('user'); setScreen('user-books');"><i class="bi bi-box-arrow-up-right me-1"></i> Preview Toko (User)</button>
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3">
                                 <i class="bi bi-shield-check me-1"></i> Administrator
                             </span>
@@ -807,7 +869,7 @@
                                 <p class="text-slate-600 mb-0 small">Pantau omzet penjualan, stok buku tersedia, keranjang aktif pelanggan, dan konfirmasi transaksi.</p>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-primary" onclick="setScreen('user-books')"><i class="bi bi-plus-lg"></i> Tambah Buku</button>
+                                <button class="btn btn-primary" onclick="setScreen('admin-books')"><i class="bi bi-plus-lg"></i> Tambah / Kelola Buku</button>
                                 <button class="btn btn-soft-primary bg-white" onclick="setScreen('admin-trx')"><i class="bi bi-receipt-cutoff"></i> Transaksi (2)</button>
                                 <button class="btn btn-soft-secondary bg-white" onclick="setScreen('admin-reports')"><i class="bi bi-printer"></i> Laporan</button>
                             </div>
@@ -862,6 +924,159 @@
                                     <div class="small text-slate-600">Live chat pelanggan aktif</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- 8B. KELOLA BUKU / KATALOG ADMIN (TERPISAH DARI USER)      -->
+    <!-- ======================================================== -->
+    <div id="screen-admin-books" class="preview-screen">
+        <div class="d-flex min-vh-100">
+            <div class="admin-sidebar-placeholder"></div>
+
+            <div class="flex-grow-1 d-flex flex-column min-vh-100 overflow-x-hidden" style="min-width: 0;">
+                <header class="navbar navbar-expand bg-white border-bottom py-2 px-4 no-print sticky-top shadow-xs">
+                    <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
+                        <span class="fw-semibold text-slate-800">Manajemen &amp; Inventaris Buku (Admin)</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="switchRoleMode('user'); setScreen('user-books');"><i class="bi bi-box-arrow-up-right me-1"></i> Preview Toko (User)</button>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3">
+                                <i class="bi bi-shield-check me-1"></i> Administrator
+                            </span>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="container-fluid px-4 py-4 flex-grow-1">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                        <div>
+                            <h3 class="fw-bold text-slate-900 mb-1"><i class="bi bi-journals me-2 text-primary"></i>Daftar Koleksi &amp; Stok Buku</h3>
+                            <p class="text-slate-600 small mb-0">Kelola informasi harga, kategori rak, pembaruan stok, tambah buku baru, dan penghapusan data buku.</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-soft-primary bg-white"><i class="bi bi-tags-fill me-1"></i> Kelola Kategori</button>
+                            <button class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> + Tambah Buku Baru</button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-white p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div class="input-group" style="max-width: 320px;">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0 ps-0" placeholder="Cari buku atau ISBN...">
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm" style="width: auto;">
+                                    <option>Semua Kategori</option>
+                                    <option>Teknologi</option>
+                                    <option>Fiksi</option>
+                                    <option>Bisnis</option>
+                                </select>
+                                <span class="badge bg-slate-100 text-slate-700 border px-3 py-2">Total: 12 Judul</span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-slate-600 small">
+                                    <tr>
+                                        <th class="ps-3" style="width: 60px;">Cover</th>
+                                        <th>Judul &amp; Informasi Buku</th>
+                                        <th>Kategori &amp; Rak</th>
+                                        <th>Harga Jual</th>
+                                        <th>Stok Tersedia</th>
+                                        <th>Terjual</th>
+                                        <th class="text-end pe-3" style="width: 140px;">Aksi Admin</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rounded-2 p-2 bg-primary text-white text-center" style="width: 44px; height: 58px; font-size: 0.65rem;">
+                                                <i class="bi bi-book"></i><br>PHP
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-slate-900">Mastering Laravel 11</div>
+                                            <div class="small text-slate-500">Penulis: Taylor Otwell | Penerbit: Laravel Press (2024)</div>
+                                            <div class="font-monospace text-slate-400" style="font-size: 0.72rem;">ISBN: 978-602-03-8891-2</div>
+                                        </td>
+                                        <td><span class="badge bg-primary bg-opacity-10 text-primary">Teknologi (005.1)</span></td>
+                                        <td><span class="fw-bold text-primary">Rp 145.000</span></td>
+                                        <td><span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1">15 Eks</span></td>
+                                        <td><span class="text-slate-600">8 Eks</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-soft-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                            <button class="btn btn-soft-danger btn-sm" title="Hapus"><i class="bi bi-trash3"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rounded-2 p-2 bg-warning text-dark text-center" style="width: 44px; height: 58px; font-size: 0.65rem;">
+                                                <i class="bi bi-book"></i><br>FIKSI
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-slate-900">Laskar Pelangi</div>
+                                            <div class="small text-slate-500">Penulis: Andrea Hirata | Penerbit: Bentang Pustaka (2023)</div>
+                                            <div class="font-monospace text-slate-400" style="font-size: 0.72rem;">ISBN: 978-979-3062-79-2</div>
+                                        </td>
+                                        <td><span class="badge bg-warning bg-opacity-10 text-warning-emphasis">Fiksi (813.01)</span></td>
+                                        <td><span class="fw-bold text-primary">Rp 89.000</span></td>
+                                        <td><span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1">24 Eks</span></td>
+                                        <td><span class="text-slate-600">45 Eks</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-soft-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                            <button class="btn btn-soft-danger btn-sm" title="Hapus"><i class="bi bi-trash3"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rounded-2 p-2 bg-success text-white text-center" style="width: 44px; height: 58px; font-size: 0.65rem;">
+                                                <i class="bi bi-book"></i><br>FIN
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-slate-900">The Psychology of Money</div>
+                                            <div class="small text-slate-500">Penulis: Morgan Housel | Penerbit: Harriman House (2022)</div>
+                                            <div class="font-monospace text-slate-400" style="font-size: 0.72rem;">ISBN: 978-085-7197-68-9</div>
+                                        </td>
+                                        <td><span class="badge bg-success bg-opacity-10 text-success">Bisnis (332.02)</span></td>
+                                        <td><span class="fw-bold text-primary">Rp 95.000</span></td>
+                                        <td><span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1">10 Eks</span></td>
+                                        <td><span class="text-slate-600">19 Eks</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-soft-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                            <button class="btn btn-soft-danger btn-sm" title="Hapus"><i class="bi bi-trash3"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="rounded-2 p-2 bg-danger text-white text-center" style="width: 44px; height: 58px; font-size: 0.65rem;">
+                                                <i class="bi bi-book"></i><br>DEV
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-slate-900">Clean Code &amp; Architecture</div>
+                                            <div class="small text-slate-500">Penulis: Robert C. Martin | Penerbit: Prentice Hall (2021)</div>
+                                            <div class="font-monospace text-slate-400" style="font-size: 0.72rem;">ISBN: 978-013-2350-88-4</div>
+                                        </td>
+                                        <td><span class="badge bg-primary bg-opacity-10 text-primary">Teknologi (004.22)</span></td>
+                                        <td><span class="fw-bold text-primary">Rp 180.000</span></td>
+                                        <td><span class="badge bg-danger bg-opacity-10 text-danger fw-bold px-2 py-1">Habis (0)</span></td>
+                                        <td><span class="text-slate-600">30 Eks</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-soft-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                            <button class="btn btn-soft-danger btn-sm" title="Hapus"><i class="bi bi-trash3"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </main>
@@ -1128,20 +1343,50 @@
 
         const screenLabels = {
             'login': 'Halaman Login',
-            'user-books': 'Katalog Buku (User)',
+            'user-books': 'Katalog Toko (User)',
             'user-dash': 'Dashboard Pelanggan',
             'user-cart': 'Keranjang Belanja (User)',
             'user-trx': 'Riwayat Transaksi Saya',
             'member': 'Kartu Anggota Member',
             'about': 'Tentang Kami (About Us)',
             'admin-dash': 'Dashboard Admin (Sidebar)',
+            'admin-books': 'Kelola Buku & Inventaris (Admin)',
             'admin-trx': 'Transaksi Penjualan (Admin)',
             'admin-reports': 'Laporan Penjualan (Admin)',
             'admin-users': 'Daftar Pengguna (Admin)',
             'chat': 'Live Chat Pelanggan'
         };
 
+        let currentRoleMode = 'user';
+
+        function switchRoleMode(mode) {
+            currentRoleMode = mode;
+            const tabUser = document.getElementById('tab-mode-user');
+            const tabAdmin = document.getElementById('tab-mode-admin');
+            const navUser = document.getElementById('nav-group-user');
+            const navAdmin = document.getElementById('nav-group-admin');
+
+            if (mode === 'admin') {
+                tabUser.classList.remove('active-user');
+                tabAdmin.classList.add('active-admin');
+                navUser.classList.add('d-none');
+                navAdmin.classList.remove('d-none');
+            } else {
+                tabAdmin.classList.remove('active-admin');
+                tabUser.classList.add('active-user');
+                navAdmin.classList.add('d-none');
+                navUser.classList.remove('d-none');
+            }
+        }
+
         function setScreen(screenName) {
+            // Jika memilih layar admin, otomatis aktifkan tab Admin
+            if (screenName.startsWith('admin-')) {
+                switchRoleMode('admin');
+            } else if (['user-books', 'user-dash', 'user-cart', 'user-trx', 'member', 'about'].includes(screenName)) {
+                switchRoleMode('user');
+            }
+
             document.querySelectorAll('.preview-screen').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.demo-pill-btn').forEach(btn => btn.classList.remove('active'));
 
@@ -1150,6 +1395,13 @@
 
             const btn = document.getElementById('btn-' + screenName);
             if (btn) btn.classList.add('active');
+
+            if (screenName === 'chat') {
+                const btnChatU = document.getElementById('btn-chat-user');
+                const btnChatA = document.getElementById('btn-chat-admin');
+                if (currentRoleMode === 'admin' && btnChatA) btnChatA.classList.add('active');
+                if (currentRoleMode === 'user' && btnChatU) btnChatU.classList.add('active');
+            }
 
             const label = document.getElementById('activeScreenName');
             if (label && screenLabels[screenName]) {
@@ -1163,6 +1415,7 @@
             // Update status active pada sidebar admin
             document.querySelectorAll('.admin-sidebar .nav-link').forEach(link => link.classList.remove('active'));
             if (screenName === 'admin-dash') document.querySelectorAll('.admin-nav-dash').forEach(l => l.classList.add('active'));
+            if (screenName === 'admin-books') document.querySelectorAll('.admin-nav-books').forEach(l => l.classList.add('active'));
             if (screenName === 'admin-trx') document.querySelectorAll('.admin-nav-trx').forEach(l => l.classList.add('active'));
             if (screenName === 'admin-reports') document.querySelectorAll('.admin-nav-reports').forEach(l => l.classList.add('active'));
             if (screenName === 'admin-users') document.querySelectorAll('.admin-nav-users').forEach(l => l.classList.add('active'));
