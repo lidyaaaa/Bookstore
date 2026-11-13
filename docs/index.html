@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Demo — BookStore</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --brand-600: #2563eb;
+            --brand-700: #1d4ed8;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-900: #0f172a;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: #f8fafc;
+            color: var(--slate-900);
+            min-height: 100vh;
+        }
+
+        .brand-logo-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        /* Top Demo Bar */
+        .demo-bar {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            position: sticky;
+            top: 0;
+            z-index: 1060;
+        }
+
+        .demo-badge-pill {
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .demo-badge-pill:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        /* Views */
+        .preview-view {
+            display: none;
+        }
+        .preview-view.active {
+            display: block;
+        }
+
+        /* Sidebar Styling */
+        .admin-sidebar {
+            width: 260px;
+            height: calc(100vh - 41px);
+            position: sticky;
+            top: 41px;
+            z-index: 1030;
+        }
+
+        .admin-sidebar .nav-link {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--slate-700);
+            padding: 0.65rem 0.85rem;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+
+        .admin-sidebar .nav-link:hover {
+            background-color: var(--slate-100);
+            color: var(--brand-600);
+        }
+
+        .admin-sidebar .nav-link.active {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .admin-sidebar .nav-link.active i {
+            color: #ffffff;
+        }
+
+        .avatar-chip {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #1e293b;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .book-card {
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            background: #fff;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+
+        .book-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.12);
+        }
+
+        .book-cover {
+            height: 180px;
+            object-fit: cover;
+            width: 100%;
+            background: #f1f5f9;
+        }
+
+        .text-gradient-brand {
+            background: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Demo Helper Bar (Spill Akun Dummy & Navigasi Cepat) -->
+    <div class="demo-bar d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary">DEMO PREVIEW</span>
+            <span>Mode Saat Ini: <strong id="currentModeLabel" class="text-warning">Halaman Login (Guest)</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="small opacity-75 d-none d-md-inline">Klik untuk langsung pindah layar:</span>
+            <button class="demo-badge-pill" onclick="switchView('login')"><i class="bi bi-box-arrow-in-right"></i> Login Page</button>
+            <button class="demo-badge-pill" onclick="switchView('user')"><i class="bi bi-person"></i> Toko (User)</button>
+            <button class="demo-badge-pill" onclick="switchView('admin')"><i class="bi bi-layout-sidebar"></i> Dashboard (Admin Sidebar)</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 1: HALAMAN LOGIN DENGAN SPILL AKUN DUMMY               -->
+    <!-- ============================================================ -->
+    <section id="view-login" class="preview-view active">
+        <!-- Guest Navbar -->
+        <nav class="navbar navbar-expand-lg bg-white border-bottom py-2">
+            <div class="container">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-slate-900" href="javascript:void(0)" onclick="switchView('user')">
+                    <span class="brand-logo-box">
+                        <i class="bi bi-bag-check-fill fs-5"></i>
+                    </span>
+                    <div>
+                        <div class="lh-1 fw-bold" style="font-size: 1.05rem;">BookStore</div>
+                        <div class="text-muted fw-medium" style="font-size: 0.68rem;">Toko Buku</div>
+                    </div>
+                </a>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="switchView('user')">Katalog Buku</button>
+                    <button class="btn btn-primary btn-sm" onclick="switchView('login')">Masuk</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container py-5">
+            <div class="row justify-content-center align-items-center">
+                <div class="col-md-7 col-lg-5">
+
+                    <!-- SPILL AKUN DEMO BOX -->
+                    <div class="alert alert-info border border-info-subtle shadow-sm rounded-4 mb-4 p-3">
+                        <div class="d-flex align-items-start gap-2 mb-2">
+                            <i class="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-slate-900">Spill Akun Demo Preview</h6>
+                                <p class="small text-slate-600 mb-0">Klik tombol isi otomatis di bawah untuk mencoba login:</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1">
+                            <!-- Akun User -->
+                            <div class="col-12 col-sm-6">
+                                <div class="bg-white p-2 rounded-3 border h-100">
+                                    <div class="badge bg-success bg-opacity-10 text-success mb-1">
+                                        <i class="bi bi-person-check me-1"></i> Akun Pelanggan (User)
+                                    </div>
+                                    <div class="small font-monospace mb-1" style="font-size: 0.78rem;">
+                                        demo.customer@bookstore.test<br>
+                                        password: <strong>demo12345</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-success w-100 py-1" onclick="fillAndLogin('user')">
+                                        Pakai Akun Ini &rarr;
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Akun Admin -->
+                            <div class="col-12 col-sm-6">
+                                <div class="bg-white p-2 rounded-3 border h-100">
+                                    <div class="badge bg-primary bg-opacity-10 text-primary mb-1">
+                                        <i class="bi bi-shield-lock me-1"></i> Akun Pengelola (Admin)
+                                    </div>
+                                    <div class="small font-monospace mb-1" style="font-size: 0.78rem;">
+                                        demo.manager@bookstore.test<br>
+                                        password: <strong>admin12345</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary w-100 py-1" onclick="fillAndLogin('admin')">
+                                        Pakai Akun Ini &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kartu Form Login -->
+                    <div class="card shadow-sm border rounded-4 p-4 p-sm-5 bg-white">
+                        <div class="text-center mb-4">
+                            <span class="brand-logo-box mb-3" style="width: 48px; height: 48px; border-radius: 14px;">
+                                <i class="bi bi-bag-check-fill fs-4"></i>
+                            </span>
+                            <h4 class="fw-bold text-slate-900 mb-1">Selamat Datang Kembali</h4>
+                            <p class="text-muted small mb-0">
+                                Masuk untuk berbelanja buku dan mengelola pesanan Anda.
+                            </p>
+                        </div>
+
+                        <form id="dummyLoginForm" onsubmit="handleLoginSubmit(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-slate-700">Alamat Email</label>
+                                <input type="email" id="loginEmail" class="form-control" placeholder="nama@email.com" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-slate-700">Password</label>
+                                <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                Masuk ke BookStore <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </form>
+
+                        <div class="mt-4 pt-3 border-top text-center small text-muted">
+                            Belum punya akun pelanggan?
+                            <a href="javascript:void(0)" class="fw-bold text-primary text-decoration-none">Daftar Sekarang</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 2: TAMPILAN USER (NAVBAR ATAS & KATALOG BUKU)            -->
+    <!-- ============================================================ -->
+    <section id="view-user" class="preview-view">
+        <!-- Navbar User -->
+        <nav class="navbar navbar-expand-lg bg-white border-bottom py-2 shadow-xs">
+            <div class="container">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-slate-900 me-4" href="javascript:void(0)">
+                    <span class="brand-logo-box">
+                        <i class="bi bi-bag-check-fill fs-5"></i>
+                    </span>
+                    <div>
+                        <div class="lh-1 fw-bold" style="font-size: 1.05rem;">BookStore</div>
+                        <div class="text-muted fw-medium" style="font-size: 0.68rem;">Toko Buku</div>
+                    </div>
+                </a>
+
+                <div class="navbar-nav flex-row align-items-center gap-2 me-auto d-none d-md-flex">
+                    <a class="nav-link active fw-semibold text-primary" href="javascript:void(0)"><i class="bi bi-shop"></i> Belanja Buku</a>
+                    <a class="nav-link text-slate-700" href="javascript:void(0)"><i class="bi bi-receipt"></i> Pesanan Saya</a>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light position-relative rounded-pill px-3 border">
+                        <i class="bi bi-cart3 me-1"></i> Keranjang
+                        <span class="badge bg-danger rounded-pill ms-1">2</span>
+                    </button>
+                    <div class="d-flex align-items-center gap-2 border-start ps-3">
+                        <span class="avatar-chip">D</span>
+                        <div class="d-none d-sm-block text-start lh-1">
+                            <div class="fw-bold small">Demo Customer</div>
+                            <div class="text-muted font-monospace" style="font-size: 0.7rem;">CUST-0092</div>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm ms-2" onclick="switchView('login')" title="Logout"><i class="bi bi-power"></i></button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container py-4">
+            <div class="p-4 p-lg-5 mb-4 rounded-4 text-white" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <span class="badge bg-white text-primary mb-2 fw-bold">PROMO HARI INI</span>
+                        <h2 class="fw-bold mb-2">Temukan Buku Favoritmu di BookStore</h2>
+                        <p class="mb-0 opacity-90">Koleksi buku teknologi, sastra, sains, dan bisnis terlengkap dengan diskon spesial pelanggan setia.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Daftar Buku Terpopuler</h4>
+                <div class="badge bg-light text-dark border p-2">Menampilkan 4 dari 24 Judul</div>
+            </div>
+
+            <!-- Grid Buku -->
+            <div class="row g-3">
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card book-card h-100 p-2">
+                        <div class="book-cover rounded-3 d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-book fs-1 text-primary"></i>
+                        </div>
+                        <div class="p-2">
+                            <span class="badge bg-primary bg-opacity-10 text-primary mb-1" style="font-size: 0.7rem;">Teknologi</span>
+                            <h6 class="fw-bold text-truncate mb-1">Mastering Laravel 11</h6>
+                            <p class="small text-muted mb-2">Taylor O.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">Rp 145.000</span>
+                                <button class="btn btn-sm btn-primary rounded-pill"><i class="bi bi-cart-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card book-card h-100 p-2">
+                        <div class="book-cover rounded-3 d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-journal-code fs-1 text-success"></i>
+                        </div>
+                        <div class="p-2">
+                            <span class="badge bg-success bg-opacity-10 text-success mb-1" style="font-size: 0.7rem;">Pemrograman</span>
+                            <h6 class="fw-bold text-truncate mb-1">Clean Code Architecture</h6>
+                            <p class="small text-muted mb-2">Robert C.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">Rp 180.000</span>
+                                <button class="btn btn-sm btn-primary rounded-pill"><i class="bi bi-cart-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card book-card h-100 p-2">
+                        <div class="book-cover rounded-3 d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-graph-up-arrow fs-1 text-warning"></i>
+                        </div>
+                        <div class="p-2">
+                            <span class="badge bg-warning bg-opacity-10 text-dark mb-1" style="font-size: 0.7rem;">Bisnis</span>
+                            <h6 class="fw-bold text-truncate mb-1">Psychology of Money</h6>
+                            <p class="small text-muted mb-2">Morgan H.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">Rp 95.000</span>
+                                <button class="btn btn-sm btn-primary rounded-pill"><i class="bi bi-cart-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card book-card h-100 p-2">
+                        <div class="book-cover rounded-3 d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-palette fs-1 text-info"></i>
+                        </div>
+                        <div class="p-2">
+                            <span class="badge bg-info bg-opacity-10 text-primary mb-1" style="font-size: 0.7rem;">Desain</span>
+                            <h6 class="fw-bold text-truncate mb-1">UI/UX Design Principles</h6>
+                            <p class="small text-muted mb-2">Steve K.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">Rp 120.000</span>
+                                <button class="btn btn-sm btn-primary rounded-pill"><i class="bi bi-cart-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 3: TAMPILAN ADMIN DENGAN SIDEBAR                        -->
+    <!-- ============================================================ -->
+    <section id="view-admin" class="preview-view">
+        <div class="d-flex">
+            <!-- SIDEBAR ADMIN -->
+            <aside class="admin-sidebar bg-white border-end shadow-sm d-flex flex-column flex-shrink-0 p-3">
+                <a href="javascript:void(0)" class="d-flex align-items-center gap-2 text-decoration-none text-slate-900 pb-3 mb-2 border-bottom">
+                    <span class="brand-logo-box">
+                        <i class="bi bi-bag-check-fill fs-5"></i>
+                    </span>
+                    <div>
+                        <div class="lh-1 fw-bold" style="font-size: 1.05rem;">BookStore</div>
+                        <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1 py-1 px-2 fw-semibold" style="font-size: 0.68rem;">
+                            <i class="bi bi-shield-check me-1"></i> Admin Toko
+                        </div>
+                    </div>
+                </a>
+
+                <div class="sidebar-menu-wrapper flex-grow-1 overflow-y-auto py-2">
+                    <div class="text-uppercase text-muted fw-bold px-2 mb-2" style="font-size: 0.68rem; letter-spacing: 0.05em;">Menu Utama</div>
+                    <ul class="nav nav-pills flex-column gap-1 mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active d-flex align-items-center gap-2" href="javascript:void(0)">
+                                <i class="bi bi-grid-1x2"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-2" href="javascript:void(0)">
+                                <i class="bi bi-shop"></i>
+                                <span>Katalog Buku</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" href="javascript:void(0)">
+                                <span class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-receipt-cutoff"></i>
+                                    <span>Transaksi</span>
+                                </span>
+                                <span class="badge rounded-pill bg-danger">3</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" href="javascript:void(0)">
+                                <span class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-chat-dots"></i>
+                                    <span>Chat Pelanggan</span>
+                                </span>
+                                <span class="badge rounded-pill bg-danger">1</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="text-uppercase text-muted fw-bold px-2 mb-2" style="font-size: 0.68rem; letter-spacing: 0.05em;">Manajemen</div>
+                    <ul class="nav nav-pills flex-column gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-2" href="javascript:void(0)">
+                                <i class="bi bi-bar-chart-line"></i>
+                                <span>Laporan Penjualan</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-2" href="javascript:void(0)">
+                                <i class="bi bi-people"></i>
+                                <span>Daftar Pengguna</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="border-top pt-3 mt-auto">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                            <span class="avatar-chip flex-shrink-0 bg-primary text-white">A</span>
+                            <div class="lh-sm text-truncate">
+                                <div class="fw-bold text-slate-900 text-truncate" style="font-size: 0.85rem;">Demo Manager</div>
+                                <div class="text-muted font-monospace" style="font-size: 0.72rem;">ADM-001</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm rounded-circle p-2" onclick="switchView('login')" title="Keluar / Logout" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-power"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- KONTEN UTAMA ADMIN -->
+            <div class="flex-grow-1 d-flex flex-column min-vh-100 overflow-x-hidden" style="min-width: 0;">
+                <header class="navbar navbar-expand bg-white border-bottom py-2 px-4 sticky-top shadow-xs">
+                    <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
+                        <span class="fw-bold text-slate-900">Dashboard Monitoring Admin</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="switchView('user')">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Preview Toko
+                            </button>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3">
+                                <i class="bi bi-shield-check me-1"></i> Administrator
+                            </span>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="container-fluid px-4 py-4 flex-grow-1">
+                    <div class="bg-white border rounded-4 p-4 mb-4">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                            <div>
+                                <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill mb-2 fw-bold">
+                                    <i class="bi bi-shield-check me-1"></i> PANEL KENDALI ADMIN BOOKSTORE
+                                </div>
+                                <h3 class="fw-bold text-slate-900 mb-1">
+                                    Monitoring <span class="text-gradient-brand">Penjualan &amp; Stok Buku</span>
+                                </h3>
+                                <p class="text-muted mb-0 small">
+                                    Pantau omzet penjualan, stok buku tersedia, keranjang aktif pelanggan, dan konfirmasi transaksi.
+                                </p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Tambah Buku</button>
+                                <button class="btn btn-outline-primary btn-sm"><i class="bi bi-receipt me-1"></i> Transaksi (3)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistik Card -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">KATALOG &amp; STOK</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary p-2 rounded-3"><i class="bi bi-bookshelf fs-5"></i></span>
+                                </div>
+                                <h4 class="fw-bold mb-1">24 Judul</h4>
+                                <div class="small text-muted">Total Stok: <strong class="text-success">310</strong> eks</div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">TOTAL PENDAPATAN</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-3"><i class="bi bi-cash-stack fs-5"></i></span>
+                                </div>
+                                <h4 class="fw-bold text-primary mb-1">Rp 4.850.000</h4>
+                                <div class="small text-muted">Buku Terjual: <strong class="text-dark">42</strong> eks</div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">STATUS TRANSAKSI</span>
+                                    <span class="badge bg-warning bg-opacity-10 text-dark p-2 rounded-3"><i class="bi bi-receipt fs-5"></i></span>
+                                </div>
+                                <h4 class="fw-bold mb-1">18 Selesai</h4>
+                                <div class="small text-muted">Menunggu: <strong class="text-warning">3 Pesanan</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">CHAT PELANGGAN</span>
+                                    <span class="badge bg-info bg-opacity-10 text-primary p-2 rounded-3"><i class="bi bi-chat-dots fs-5"></i></span>
+                                </div>
+                                <h4 class="fw-bold mb-1">1 Belum Dibaca</h4>
+                                <div class="small text-muted">Live chat responsif aktif</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Pesanan Terbaru -->
+                    <div class="card shadow-sm border">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="fw-bold mb-0">Pesanan Masuk Terbaru</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr class="small text-muted">
+                                        <th>KODE</th>
+                                        <th>PEMBELI</th>
+                                        <th>TOTAL</th>
+                                        <th>STATUS</th>
+                                        <th>AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="font-monospace fw-bold">#TRX-202611-001</td>
+                                        <td>Demo Customer</td>
+                                        <td class="fw-semibold">Rp 325.000</td>
+                                        <td><span class="badge bg-warning text-dark">Menunggu Konfirmasi</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success py-0 px-2" style="font-size: 0.75rem;">Setujui</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="font-monospace fw-bold">#TRX-202611-002</td>
+                                        <td>Ahmad F.</td>
+                                        <td class="fw-semibold">Rp 145.000</td>
+                                        <td><span class="badge bg-success">Selesai</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-light border py-0 px-2" style="font-size: 0.75rem;">Cetak Struk</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <!-- JavaScript Interaktif -->
+    <script>
+        function switchView(viewName) {
+            document.querySelectorAll('.preview-view').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('view-' + viewName);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            const label = document.getElementById('currentModeLabel');
+            if (viewName === 'login') {
+                label.innerText = 'Halaman Login (Guest)';
+                label.className = 'text-warning';
+            } else if (viewName === 'user') {
+                label.innerText = 'Toko & Katalog (Role: Pelanggan / User)';
+                label.className = 'text-info';
+            } else if (viewName === 'admin') {
+                label.innerText = 'Dashboard Sidebar (Role: Admin)';
+                label.className = 'text-success';
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function fillAndLogin(role) {
+            const emailInput = document.getElementById('loginEmail');
+            const passInput = document.getElementById('loginPassword');
+
+            if (role === 'admin') {
+                emailInput.value = 'demo.manager@bookstore.test';
+                passInput.value = 'admin12345';
+                setTimeout(() => switchView('admin'), 300);
+            } else {
+                emailInput.value = 'demo.customer@bookstore.test';
+                passInput.value = 'demo12345';
+                setTimeout(() => switchView('user'), 300);
+            }
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.toLowerCase();
+            if (email.includes('admin') || email.includes('manager')) {
+                switchView('admin');
+            } else {
+                switchView('user');
+            }
+        }
+    </script>
+</body>
+</html>
