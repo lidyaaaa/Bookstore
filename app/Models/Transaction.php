@@ -63,6 +63,11 @@ class Transaction extends Model
         return $this->hasMany(TransactionItem::class);
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
     /**
      * Menggabungkan pesanan berstatus 'menunggu' dari user yang sama
      * HANYA JIKA metode pembayarannya sama.

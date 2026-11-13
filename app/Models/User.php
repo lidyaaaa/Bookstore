@@ -73,6 +73,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Relasi pesan terkirim.
+     */
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * Relasi pesan diterima.
+     */
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    /**
      * Relasi ke seluruh riwayat transaksi pembelian.
      */
     public function transactions(): HasMany

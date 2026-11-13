@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
@@ -50,6 +51,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi/{transaction}/struk', [TransactionController::class, 'receipt'])
         ->name('transactions.receipt');
 
+    Route::get('/chat', [ChatController::class, 'index'])
+        ->name('chat.index');
+    Route::post('/chat', [ChatController::class, 'store'])
+        ->name('chat.store');
+
     Route::middleware('role:user')->group(function () {
         Route::get('/keranjang', [CartController::class, 'index'])
             ->name('cart.index');
@@ -80,7 +86,7 @@ Route::middleware('auth')->group(function () {
             ->name('books.update');
         Route::delete('/books/{book}', [BookController::class, 'destroy'])
             ->name('books.destroy');
-    
+
         Route::post('/categories', [CategoryController::class, 'store'])
             ->name('categories.store');
         Route::put('/categories/{category}', [CategoryController::class, 'update'])
@@ -88,7 +94,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
             ->name('categories.destroy');
 
-       
         Route::post('/transaksi/kasir', [TransactionController::class, 'storeByAdmin'])
             ->name('transactions.store-admin');
         Route::post('/transaksi/{transaction}/setujui', [TransactionController::class, 'approve'])

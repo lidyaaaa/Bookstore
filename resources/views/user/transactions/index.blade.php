@@ -98,6 +98,10 @@
 
                             <td class="text-end" style="white-space: nowrap;">
                                 <div class="d-flex flex-wrap justify-content-end gap-1">
+                                    <a href="{{ route('chat.index', ['transaction_id' => $trx->id]) }}" class="btn btn-soft-primary btn-sm" title="Chat Admin Terkait Pesanan Ini">
+                                        <i class="bi bi-chat-dots"></i> Chat Admin
+                                    </a>
+
                                     <a href="{{ route('transactions.receipt', $trx) }}" class="btn btn-soft-secondary btn-sm" title="Lihat Struk">
                                         <i class="bi bi-receipt"></i> Struk
                                     </a>
@@ -211,9 +215,14 @@
                             </td>
 
                             <td class="text-end" style="white-space: nowrap;">
-                                <a href="{{ route('transactions.receipt', $trx) }}" class="btn btn-soft-secondary btn-sm" title="Lihat Struk">
-                                    <i class="bi bi-receipt"></i> Struk
-                                </a>
+                                <div class="d-flex flex-wrap justify-content-end gap-1">
+                                    <a href="{{ route('chat.index', ['transaction_id' => $trx->id]) }}" class="btn btn-soft-primary btn-sm" title="Chat Admin Terkait Pesanan Ini">
+                                        <i class="bi bi-chat-dots"></i> Chat Admin
+                                    </a>
+                                    <a href="{{ route('transactions.receipt', $trx) }}" class="btn btn-soft-secondary btn-sm" title="Lihat Struk">
+                                        <i class="bi bi-receipt"></i> Struk
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

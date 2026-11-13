@@ -67,8 +67,8 @@ class BookController extends Controller
         $data = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'kategori_baru' => 'nullable|string|max:100',
-            'judul' => 'required|string|max:255',
-            'isbn' => 'nullable|string|max:30',
+            'judul' => 'required|string|max:255|unique:books,judul',
+            'isbn' => 'nullable|string|max:30|unique:books,isbn',
             'call_number' => 'nullable|string|max:50',
             'penulis' => 'required|string|max:255',
             'penerbit' => 'nullable|string|max:255',
@@ -83,6 +83,8 @@ class BookController extends Controller
             'sinopsis' => 'nullable|string|max:2000',
             'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
+            'judul.unique' => 'Buku dengan judul ini sudah ada di dalam katalog/database.',
+            'isbn.unique' => 'Buku dengan nomor ISBN ini sudah terdaftar di database.',
             'stok.min' => 'Stok buku tidak boleh bernilai minus (minimal 0).',
             'harga.min' => 'Harga buku tidak boleh bernilai minus.',
         ]);
@@ -123,8 +125,8 @@ class BookController extends Controller
         $data = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'kategori_baru' => 'nullable|string|max:100',
-            'judul' => 'required|string|max:255',
-            'isbn' => 'nullable|string|max:30',
+            'judul' => 'required|string|max:255|unique:books,judul,'.$book->id,
+            'isbn' => 'nullable|string|max:30|unique:books,isbn,'.$book->id,
             'call_number' => 'nullable|string|max:50',
             'penulis' => 'required|string|max:255',
             'penerbit' => 'nullable|string|max:255',
@@ -139,6 +141,8 @@ class BookController extends Controller
             'sinopsis' => 'nullable|string|max:2000',
             'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
+            'judul.unique' => 'Buku dengan judul ini sudah ada di dalam katalog/database.',
+            'isbn.unique' => 'Buku dengan nomor ISBN ini sudah terdaftar di database.',
             'stok.min' => 'Stok buku tidak boleh bernilai minus (minimal 0).',
             'harga.min' => 'Harga buku tidak boleh bernilai minus.',
         ]);

@@ -1,6 +1,7 @@
 @php
     \App\Models\Transaction::syncPendingTransactions();
     $pendingTransactionsCount = \App\Models\Transaction::where('status', 'menunggu')->count();
+    $unreadChatCount = \App\Models\Message::where('receiver_id', auth()->id())->where('is_read', false)->count();
 @endphp
 
 <div class="navbar-nav flex-row flex-wrap align-items-center justify-content-center mx-auto gap-1 gap-lg-2 my-2 my-lg-0">
@@ -19,6 +20,14 @@
         <i class="bi bi-receipt-cutoff"></i> Transaksi Penjualan
         @if($pendingTransactionsCount > 0)
             <span class="badge rounded-pill bg-danger ms-1" title="{{ $pendingTransactionsCount }} pesanan menunggu konfirmasi">{{ $pendingTransactionsCount }}</span>
+        @endif
+    </a>
+
+    <a class="nav-pill-link {{ request()->routeIs('chat.*') ? 'active' : '' }}"
+        href="{{ route('chat.index') }}">
+        <i class="bi bi-chat-dots"></i> Chat Pelanggan
+        @if($unreadChatCount > 0)
+            <span class="badge rounded-pill bg-danger ms-1" title="{{ $unreadChatCount }} pesan belum dibaca">{{ $unreadChatCount }}</span>
         @endif
     </a>
 
